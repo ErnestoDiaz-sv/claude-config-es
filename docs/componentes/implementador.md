@@ -1,6 +1,6 @@
 # Agente `implementador`
 
-**Propósito:** ejecutar una tarea especificada, con tests primero cuando corresponde.
+**Propósito:** ejecutar una tarea definida, con tests primero cuando corresponde.
 
 - **Cuándo se usa:** la decisión está tomada y queda una tarea concreta de implementación.
 - **Entradas:** instrucción, spec/plan y archivos indicados.

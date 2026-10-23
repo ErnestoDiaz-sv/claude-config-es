@@ -2,7 +2,7 @@
 
 ## Filosofía y flujo
 
-El modelo principal decide el enfoque, resuelve ambigüedades y coordina. Los subagentes ejecutan tareas acotadas y con un resultado claro. Este reparto no requiere delegar cada paso: el trabajo chico suele ser más directo en línea.
+El modelo principal decide el enfoque, resuelve ambigüedades y coordina. Los subagentes ejecutan tareas acotadas y con un resultado claro. No hace falta delegar cada paso; el trabajo pequeño suele ser más directo en línea.
 
 Las skills describen procedimientos que se invocan cuando aplican. Los agentes de `agents/` tienen perfiles distintos: exploración de solo lectura, implementación de una tarea definida y revisión independiente. El usuario conserva las decisiones de alcance y las acciones externas.
 

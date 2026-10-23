@@ -1,6 +1,6 @@
 # Skill `supervisor-de-costos`
 
-**Propósito:** decidir cuándo delegar, mantener el trabajo en línea o sugerir compactar/reiniciar.
+**Propósito:** decidir cuándo delegar, seguir el trabajo en la conversación o sugerir compactar/reiniciar.
 
 - **Cuándo se activa:** al iniciar una tarea delimitada y cuando la conversación acumula contexto pesado.
 - **Entradas:** tamaño y autonomía de la tarea, perfiles de agentes y estado de la conversación.

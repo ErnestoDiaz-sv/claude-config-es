@@ -1,6 +1,6 @@
 # Configuración ligera para Claude Code
 
-Este repositorio reúne instrucciones, agentes, skills y utilidades para trabajar con Claude Code. El enfoque pone al modelo principal a decidir y coordinar, y reserva los subagentes para trabajo acotado; el hook de verificación es optativo. Está diseñado para gastar menos cuota al reducir delegaciones pequeñas y contexto innecesario, pero no hay mediciones de ahorro.
+Este repositorio reúne instrucciones, agentes, skills y utilidades para trabajar con Claude Code. El modelo principal decide y coordina; los subagentes se ocupan de tareas acotadas. El hook de verificación es opcional. La configuración busca reducir el uso de cuota al evitar delegaciones pequeñas y contexto innecesario; todavía no hay mediciones de ahorro.
 
 ## Inicio rápido
 
@@ -26,7 +26,7 @@ El destino predeterminado es `~/.claude`; `CLAUDE_HOME=/ruta` permite probar o e
 
 ## Cómo funciona
 
-El modelo principal define el enfoque y decide si delegar; los agentes ejecutan tareas delimitadas. Las skills aportan procedimientos bajo demanda. El usuario elige si instala el hook y activa su configuración en `settings.json`; para participar, cada proyecto debe tener un `scripts/check.sh` ejecutable.
+El modelo principal define el enfoque y decide si delegar; los agentes ejecutan tareas delimitadas. Las skills aportan procedimientos bajo demanda. El usuario elige si instala el hook y activa su configuración en `settings.json`; para que se ejecute, cada proyecto debe tener un `scripts/check.sh` ejecutable.
 
 ## Documentación
 

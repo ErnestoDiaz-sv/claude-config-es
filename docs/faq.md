@@ -14,7 +14,7 @@ Definí `CLAUDE_HOME=/ruta` antes de ejecutar `install.sh` o `uninstall.sh`. El 
 
 ## El hook vuelve a ejecutarse o parece entrar en un ciclo
 
-El hook usa una huella de cambios para no repetir un check que ya pasó. Si el check falla en la primera ejecución, devuelve el error a Claude. Si el hook indica que ya se reintentó, permite detenerse y presenta un mensaje, evitando un bucle infinito. Para omitir una ejecución configurá `CLAUDE_SKIP_VERIFY=1`. También podés desactivar la entrada Stop en `settings.json`.
+El hook usa una huella de cambios para no repetir un check que ya pasó. Si el check falla en la primera ejecución, devuelve el error a Claude. Si detecta un reintento, permite que Claude se detenga y muestra un mensaje para evitar un bucle infinito. Para omitir una ejecución configurá `CLAUDE_SKIP_VERIFY=1`. También podés desactivar la configuración Stop en `settings.json`.
 
 ## ¿Por qué no se ejecutó el hook?
 
