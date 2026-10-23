@@ -28,36 +28,8 @@ esac
 
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 claude_home="${CLAUDE_HOME:-$HOME/.claude}"
-files=()
+mapfile -t files < <("$repo_dir/scripts/list-files.sh" "$only")
 did_action=false
-
-add_category() {
-  local category=$1
-  case "$category" in
-    skills)
-      files+=(
-        skills/investigar/SKILL.md
-        skills/office-hours/SKILL.md
-        skills/revisar-plan/SKILL.md
-        skills/limpieza-config/SKILL.md
-        skills/supervisor-de-costos/SKILL.md
-        skills/proyecto-de-codigo-con-ia/SKILL.md
-        skills/ship/SKILL.md
-      ) ;;
-    agents)
-      files+=(agents/explorador.md agents/implementador.md agents/revisor.md) ;;
-    hooks)
-      files+=(hooks/verify-on-stop.sh statusline.sh) ;;
-  esac
-}
-
-if [[ "$only" == all ]]; then
-  add_category skills
-  add_category agents
-  add_category hooks
-else
-  add_category "$only"
-fi
 
 for relative_path in "${files[@]}"; do
   source_path="$repo_dir/$relative_path"

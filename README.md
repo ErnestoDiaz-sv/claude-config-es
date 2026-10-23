@@ -1,40 +1,42 @@
 # Configuración ligera para Claude Code
 
-Una configuración ligera para Claude Code pensada para el plan Pro: Opus toma las decisiones y coordina; subagentes más económicos ejecutan tareas acotadas; un hook de verificación opt-in corre los checks del repositorio al detenerse; y las prácticas de costo ayudan a mantener las sesiones enfocadas. No se prometen ahorros medidos.
+Este repositorio reúne instrucciones, agentes, skills y utilidades para trabajar con Claude Code. El enfoque pone al modelo principal a decidir y coordinar, y reserva los subagentes para trabajo acotado; el hook de verificación es optativo. Está diseñado para gastar menos cuota al reducir delegaciones pequeñas y contexto innecesario, pero no hay mediciones de ahorro.
 
-## Contenido
+## Inicio rápido
 
-| Componente | Qué incluye |
-|---|---|
-| `CLAUDE.example.md` | Plantilla genérica de instrucciones globales en español. |
-| `settings.example.json` | Ejemplo mínimo de configuración de modelo, status line y hook. |
-| `quality-bar.md` | Criterios verificables de calidad de ingeniería. |
-| `statusline.sh` | Modelo y uso aproximado de contexto en la terminal. |
-| `hooks/verify-on-stop.sh` | Verificación opt-in de cambios no documentales al detenerse. |
-| `agents/` | Perfiles de exploración, implementación y revisión. |
-| `skills/` | Guías de investigación, planificación, costos, configuración y entrega. |
-| `install.sh` | Instalador que copia archivos y nunca sobrescribe existentes. |
-
-## Instalación
-
-Primero revisá las acciones sin escribir nada:
+Revisá qué se copiaría y luego instalá:
 
 ```bash
 ./install.sh --dry-run
-```
-
-Luego instalá la configuración completa con:
-
-```bash
 ./install.sh
 ```
 
-El destino predeterminado es `~/.claude`; se puede cambiar con `CLAUDE_HOME=/ruta`. Para instalar solo una categoría, usá `--only skills`, `--only agents` o `--only hooks`. Los archivos existentes se omiten. El instalador no modifica `settings.json`: revisá `settings.example.json` y combiná sus opciones manualmente.
+El destino predeterminado es `~/.claude`; `CLAUDE_HOME=/ruta` permite probar o elegir otro. El instalador omite archivos existentes y nunca cambia `settings.json`. Consultá [la guía rápida](docs/guia-rapida.md) antes de combinar manualmente [el ejemplo de configuración](settings.example.json).
 
-## Hook Stop
+## Componentes
 
-El hook solo actúa en un repositorio que tenga un `scripts/check.sh` ejecutable, un `HEAD` existente y cambios sin confirmar que no sean Markdown. Si esos cambios no cambiaron desde una verificación exitosa, evita repetirla. El hook no instala ni crea `scripts/check.sh`: cada repositorio opta por participar al proveer ese script. Se puede omitir una ejecución con `CLAUDE_SKIP_VERIFY=1`.
+| Componente | Descripción | Documentación |
+|---|---|---|
+| Skills | Siete flujos para investigar, planear, coordinar, limpiar y entregar. | [Índice de componentes](docs/componentes/README.md) |
+| Agentes | Exploración, implementación y revisión con responsabilidades acotadas. | [Índice de componentes](docs/componentes/README.md) |
+| Hook Stop | Ejecuta de forma optativa los checks del proyecto al detenerse. | [Verificación al detenerse](docs/componentes/verify-on-stop.md) |
+| Status line | Muestra el modelo y, si el dato está disponible, el contexto informado. | [Status line](docs/componentes/statusline.md) |
+| Plantillas | Ejemplos de instrucciones globales, settings y reglas de proyecto. | [Guía completa](docs/guia-completa.md) |
+| Calidad | Criterios mecánicos y manuales para proyectos de código. | [Barra de calidad](quality-bar.md) |
+
+## Cómo funciona
+
+El modelo principal define el enfoque y decide si delegar; los agentes ejecutan tareas delimitadas. Las skills aportan procedimientos bajo demanda. El usuario elige si instala el hook y activa su configuración en `settings.json`; para participar, cada proyecto debe tener un `scripts/check.sh` ejecutable.
+
+## Documentación
+
+- [Guía rápida](docs/guia-rapida.md): instalación, primer uso y verificación.
+- [Guía completa](docs/guia-completa.md): filosofía, delegación y calidad.
+- [Seguridad](docs/seguridad.md): alcance, lecturas, escrituras y auditoría.
+- [Preguntas frecuentes](docs/faq.md): instalación, personalización y problemas comunes.
+- [Índice de componentes](docs/componentes/README.md): páginas detalladas de cada skill, agente y script.
+- [Contribuir](CONTRIBUTING.md) · [Seguridad y reporte](SECURITY.md) · [Cambios](CHANGELOG.md).
 
 ## Créditos
 
-Ver [NOTICE.md](NOTICE.md) para los créditos y licencias de los materiales adaptados.
+Algunas skills se adaptaron de proyectos externos; sus avisos y licencias están en [NOTICE.md](NOTICE.md). El resto del material se ofrece según [LICENSE](LICENSE).
