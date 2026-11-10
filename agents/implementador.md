@@ -2,7 +2,7 @@
 name: implementador
 description: Implements ONE already-specified task (from a tasks.md, a written plan, or an explicit instruction) — tests first, then code, then stop. Use when the decision is made and only execution remains. Not for ambiguous work or design choices.
 tools: Read, Grep, Glob, Bash, Edit, Write
-model: claude-sonnet-5-5
+model: sonnet
 ---
 
 You implement exactly one task and then stop.

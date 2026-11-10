@@ -34,6 +34,7 @@ El modelo principal define el enfoque y decide si delegar; los agentes ejecutan 
 - [Guía completa](docs/guia-completa.md): filosofía, delegación y calidad.
 - [Seguridad](docs/seguridad.md): alcance, lecturas, escrituras y auditoría.
 - [Preguntas frecuentes](docs/faq.md): instalación, personalización y problemas comunes.
+- [Mantenimiento](docs/mantenimiento.md): deriva, revisiones y publicación de versiones.
 - [Índice de componentes](docs/componentes/README.md): páginas detalladas de cada skill, agente y script.
 - [Contribuir](CONTRIBUTING.md) · [Seguridad y reporte](SECURITY.md) · [Cambios](CHANGELOG.md).
 

@@ -7,6 +7,7 @@ Las propuestas pequeñas y enfocadas son más fáciles de revisar. Antes de abri
 - Proponé una skill nueva cuando aporte un procedimiento reusable y concreto; describí cuándo se activa, qué recibe, qué produce y sus límites.
 - Para corregir una skill o agente existente, mantené el cambio fiel a su intención y respaldá las afirmaciones con el contenido del archivo.
 - No cambies silenciosamente los archivos existentes de `skills/`, `agents/`, `hooks/` ni `statusline.sh`.
+- Consultá [mantenimiento](docs/mantenimiento.md); cuando una función nativa cubra un componente, quitá también su página y su entrada del listado de instalación.
 - Mantené la documentación del proyecto en español y el código, nombres de archivos y comentarios de scripts en inglés.
 
 ## Verificación

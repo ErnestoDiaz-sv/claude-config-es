@@ -2,7 +2,7 @@
 name: explorador
 description: Read-only search and summarize. Use for mechanical recon that reads many files or long tool output and returns a short answer — where is X, list Y, summarize these docs, what changed in this repo since a date. Never for decisions or edits.
 tools: Read, Grep, Glob, Bash
-model: claude-haiku-5-5
+model: haiku
 effort: low
 ---
 

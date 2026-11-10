@@ -5,6 +5,10 @@ repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
+if [[ "${REQUIRE_SHELLCHECK:-}" == 1 ]] && ! command -v shellcheck >/dev/null 2>&1; then
+  fail "REQUIRE_SHELLCHECK=1 but shellcheck is not installed"
+fi
+
 while IFS= read -r -d '' file; do
   bash -n "$file" || fail "bash syntax: $file"
   if command -v shellcheck >/dev/null 2>&1; then
@@ -14,6 +18,23 @@ done < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
 if ! command -v shellcheck >/dev/null 2>&1; then
   printf 'SKIP shellcheck (not installed)\n'
 fi
+
+python3 - <<'PY' || exit 1
+from pathlib import Path
+import re
+root = Path.cwd()
+errors = []
+for skill in sorted((root / "skills").glob("*/SKILL.md")):
+    if len(skill.read_text().splitlines()) > 150:
+        errors.append(f"skill exceeds 150 lines: {skill.relative_to(root)}")
+for agent in sorted((root / "agents").glob("*.md")):
+    text = agent.read_text()
+    if re.search(r"^model:\s*claude-.+-\d+\s*$", text, re.M):
+        errors.append(f"pinned model ID: {agent.relative_to(root)}")
+if errors:
+    print("\n".join(f"FAIL: {error}" for error in errors))
+    raise SystemExit(1)
+PY
 
 while IFS= read -r -d '' file; do
   jq empty "$file" || fail "invalid JSON: $file"
@@ -119,3 +140,38 @@ for relative in "${expected[@]}"; do
   [[ -f "$dry_home/$relative" ]] || fail "uninstall dry-run removed $relative"
 done
 printf 'PASS: installer and uninstaller integration\n'
+
+./scripts/test-hook.sh
+drift_home="$tmp/drift-home"
+CLAUDE_HOME="$drift_home" ./install.sh >/dev/null
+CLAUDE_HOME="$drift_home" ./scripts/drift.sh >/dev/null || fail "fresh install drift"
+drift_files=("${expected[@]}")
+repo_before="$(find . -type f -print0 | sort -z | xargs -0 sha256sum)"
+drift_before="$(find "$drift_home" -type f -print0 | sort -z | xargs -0 sha256sum)"
+fresh_output="$(CLAUDE_HOME="$drift_home" ./scripts/drift.sh)" || fail "fresh install drift"
+[[ "$fresh_output" == "drift: 0 different, 0 missing, ${#expected[@]} identical" ]] || fail "fresh drift output"
+repo_after="$(find . -type f -print0 | sort -z | xargs -0 sha256sum)"
+drift_after="$(find "$drift_home" -type f -print0 | sort -z | xargs -0 sha256sum)"
+[[ "$repo_before" == "$repo_after" && "$drift_before" == "$drift_after" ]] || fail "fresh drift modified files"
+printf '\nchanged\n' >>"$drift_home/${drift_files[0]}"
+rm "$drift_home/${drift_files[1]}"
+repo_before="$(find . -type f -print0 | sort -z | xargs -0 sha256sum)"
+drift_before="$(find "$drift_home" -type f -print0 | sort -z | xargs -0 sha256sum)"
+set +e
+drift_output="$(CLAUDE_HOME="$drift_home" ./scripts/drift.sh)"; drift_status=$?
+set -e
+[[ $drift_status == 1 ]] || fail "drift exit code"
+identical_count=$((${#expected[@]} - 2))
+expected_output=$(printf 'DIFFERENT: %s\nMISSING: %s\ndrift: 1 different, 1 missing, %d identical' "${drift_files[0]}" "${drift_files[1]}" "$identical_count")
+[[ "$drift_output" == "$expected_output" ]] || fail "drift exact output"
+set +e
+diff_output="$(CLAUDE_HOME="$drift_home" ./scripts/drift.sh --diff)"; drift_status=$?
+set -e
+[[ $drift_status == 1 && "$diff_output" == *'--- '* && "$diff_output" == *'+++ '* ]] || fail "drift diff output"
+drift_after="$(find "$drift_home" -type f -print0 | sort -z | xargs -0 sha256sum)"
+repo_after="$(find . -type f -print0 | sort -z | xargs -0 sha256sum)"
+[[ "$drift_before" == "$drift_after" && "$repo_before" == "$repo_after" ]] || fail "drift modified files"
+set +e
+CLAUDE_HOME="$drift_home" ./scripts/drift.sh --bogus >/dev/null 2>&1; drift_status=$?
+set -e
+[[ $drift_status == 2 ]] || fail "drift usage exit code"
