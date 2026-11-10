@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Intentional single-quoted snippets are written to the fake check script and expand there later.
+# shellcheck disable=SC2016
 set -euo pipefail
 
 unset CLAUDE_PROJECT_DIR CLAUDE_SKIP_VERIFY
