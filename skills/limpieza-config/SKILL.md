@@ -1,6 +1,7 @@
 ---
 name: limpieza-config
 description: Limpieza periódica de una configuración de Claude Code — skills, memorias, hooks, permisos, MCP, timers y cachés que quedaron viejos, duplicados, huérfanos o contradictorios. Usar cuando el usuario pide revisar qué sobra, ordenar memorias o limpiar la configuración. Propone candidatos uno por uno con evidencia; nunca borra sin confirmación ni de forma irreversible.
+disable-model-invocation: true
 ---
 
 # Limpieza de config — recolección de basura con humano en el loop
@@ -19,9 +20,9 @@ y cada sesión paga por lo que se carga siempre.
    La edad es una señal, no un veredicto.
 4. **Memorias contradictorias se fusionan leyendo las dos** y quedándose con
    la verdad más nueva — no se borra la más larga ni se trunca.
-5. **No tocar:** directorios gestionados por sincronización o por el producto,
-   discos de backup, ni nada fuera de `~/.claude`, `~/dotfiles` o el `.claude/`
-   de un proyecto.
+5. **No tocar:** `plugins/` (lo maneja Claude Code), directorios gestionados
+   por sincronización, discos de backup, ni nada fuera de `~/.claude`,
+   `~/dotfiles` o el `.claude/` de un proyecto.
 6. **Máximo ~20 candidatos por pasada.** Es periódico, no exhaustivo.
 
 ## Dónde mirar (y qué delata un candidato)
@@ -33,19 +34,27 @@ aprobado.
 | Canal | Ruta | Señales |
 |---|---|---|
 | Skills | `~/.claude/skills/*/` | Nunca invocada en transcripts recientes; se pisa con otra; dominio que ya no aplica; SKILL.md vacío o roto |
-| Agentes | `~/.claude/agents/*.md` | Nadie los menciona; duplican a otro |
-| Memorias | Directorio de memorias del producto | Marcadas STALE/HISTÓRICO/CERRADO; fechas pasadas; archivo sin índice o índice con destino inexistente; contradicciones; referencias a archivos o flags inexistentes |
-| Hooks | `~/.claude/hooks/` + configuración | Script que ninguna configuración referencia; hook que apunta a script inexistente |
-| Permisos | Archivos de configuración de permisos | Duplicados; reglas específicas tapadas por un comodín; permisos de un experimento puntual |
-| MCP | Lista de servidores MCP | No conecta; duplica a otro; sin uso reciente |
-| Programados | Timers, cron y rutinas | Timer cuyo script ya no existe; tarea de una sola ejecución ya disparada; loop de espera innecesario |
-| Cachés | Directorios de caché | Grande y antiguo. Los historiales son datos de usuario: solo proponer por tamaño, nunca por defecto |
+| Agentes | `~/.claude/agents/*.md` | Nadie los menciona (skills, CLAUDE.md, transcripts); duplican a otro |
+| Memorias | `~/.claude/projects/*/memory/` | Marcadas STALE/HISTÓRICO/CERRADO; fechas pasadas; archivo sin línea en `MEMORY.md` o línea apuntando a archivo inexistente; contradicciones; referencias a archivos o flags inexistentes |
+| Hooks | `~/.claude/hooks/` + `settings.json` | Script que ningún settings referencia; hook que apunta a script inexistente |
+| Permisos | `settings.json`, `settings.local.json`, `<repo>/.claude/settings.local.json` | Duplicados; reglas específicas tapadas por un comodín; permisos de un experimento puntual |
+| MCP | `claude mcp list` | No conecta; duplica a otro; sin uso en transcripts |
+| Programados | `systemctl --user list-timers`, cron, rutinas programadas | Timer cuyo script ya no existe; tarea de una sola ejecución ya disparada; loop de espera innecesario |
+| Cachés | `file-history/`, `debug/`, `shell-snapshots/`, `paste-cache/` | Grande y de más de 30 días. Los `.jsonl` de `projects/` son historial: solo proponer por tamaño, nunca por defecto |
 
-Si hay transcripts disponibles, se puede contar uso de skills y comandos. No
-interpretar comandos nativos como invocaciones de skills.
+Uso de skills en los transcripts (invocación por herramienta y por slash;
+la lista incluye comandos nativos como `/clear`, ignorarlos):
 
-Para detectar hooks huérfanos, comparar los nombres de los scripts con las
-referencias de los archivos de configuración, sin cambiar esos archivos.
+```bash
+grep -ho -e '"skill":"[^"]*"' -e '<command-name>/[^<]*' ~/.claude/projects/*/*.jsonl \
+  | sed -E 's/.*"skill":"|.*<command-name>\///; s/"$//' | sort | uniq -c | sort -rn
+```
+
+Hooks huérfanos (solo lee, no cambia la configuración):
+
+```bash
+for f in ~/.claude/hooks/*; do grep -qF "$(basename "$f")" ~/.claude/settings*.json || echo "HUÉRFANO: $f"; done
+```
 
 ## Flujo
 
@@ -55,8 +64,14 @@ referencias de los archivos de configuración, sin cambiar esos archivos.
    primero, "solo viejo" al final): ruta, canal, señal, tamaño, última
    modificación.
 3. **Confirmar uno por uno.** El usuario puede cortar cuando quiera.
-4. **Aplicar** solo lo confirmado y dentro de las rutas permitidas. Para
-   elementos movidos a la papelera, dejar un registro con fecha, motivo y
-   pasos para deshacer. Al mover una memoria, actualizar también su índice.
+4. **Aplicar** solo lo confirmado y dentro de las rutas permitidas:
+   ```bash
+   d=$(date +%F); mkdir -p ~/.claude/_gc_trash/$d
+   mv <ruta> ~/.claude/_gc_trash/$d/
+   echo "$(date -Is) <ruta> -> _gc_trash/$d/ — <motivo> (deshacer: mv de vuelta)" >> ~/.claude/limpieza-log.md
+   ```
+   - Memoria movida → sacar también su línea de `MEMORY.md`.
+   - Permisos (JSON sin comentarios): copiar a `.bak`, anotar la regla
+     textual en el log, quitarla con `jq`.
 5. **Reportar** en 3-4 líneas: qué se movió, cuánto se liberó, qué canales
    quedaron sanos, y sugerir la próxima pasada en aproximadamente 30 días.

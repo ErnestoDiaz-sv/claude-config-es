@@ -2,7 +2,7 @@
 
 ## Deriva
 
-`scripts/drift.sh` compara los componentes del repositorio con la copia instalada. Ejecutá `scripts/drift.sh` para ver si hay diferencias o `scripts/drift.sh --diff` para verlas. Las mejoras se hacen en el repositorio y se instalan desde ahí. Si la copia instalada tiene algo mejor, incorporalo al repositorio a mano después de quitar rutas y datos personales.
+`scripts/drift.sh` compara los componentes del repositorio con la copia instalada. Ejecutá `scripts/drift.sh` para ver si hay diferencias o `scripts/drift.sh --diff` para verlas. Las mejoras se hacen en el repositorio y se instalan desde ahí. Si la copia instalada tiene algo mejor, incorporalo al repositorio a mano después de quitar rutas y datos personales. Si personalizaste tu copia instalada, `scripts/drift.sh` va a seguir listando esos archivos como distintos: es esperado, y sirve para revisar con `--diff` si hay algo nuevo que valga la pena traer.
 
 ## Revisión mensual
 

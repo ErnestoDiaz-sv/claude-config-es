@@ -1,123 +1,80 @@
 ---
 name: supervisor-de-costos
-description: Supervisor de costo/eficiencia de la propia interacción: decide qué delegar a subagentes y con qué modelo según el peso de la tarea, aplica un piso mínimo por debajo del cual delegar sale más caro que hacerlo inline, y avisa cuando la conversación se puso pesada y conviene compactar o reiniciar con un traspaso. Activarla proactivamente al arrancar una tarea nueva y antes de lanzar cualquier subagente.
+description: Reparto de costo entre el modelo principal y los subagentes explorador/implementador/revisor — qué delegar, a qué modelo y con qué esfuerzo, el piso por debajo del cual delegar sale más caro que hacerlo inline, y cuándo cortar una conversación pesada con /compact o un traspaso. Usar antes de lanzar subagentes, al arrancar una tarea larga o de muchos archivos, o cuando el usuario dice "esto se puso caro/largo".
 ---
 
-# Supervisor de costos e interacción
+# Supervisor de costos
 
-Vos (el modelo actual, sea el que sea) actuás además como supervisor de la
-eficiencia de esta misma conversación. El objetivo es usar contexto y
-delegación solo cuando aporten valor.
+Objetivo: que la conversación no cueste más de lo necesario, sin que el
+usuario tenga que pedirlo. Hablá solo cuando el ahorro es real, en una
+línea, sin sermón.
 
-## Límites reales — decilo si hace falta, no finjas que no existen
+## Límites
 
-- **No podés cambiarte el modelo a vos mismo.** Cambiar el modelo para toda
-  la sesión es una decisión del usuario mediante el comando correspondiente.
-- **No tenés el conteo exacto de tokens gastados** en esta conversación. Si
-  existe un comando de costo, recomendalo cuando sea relevante; no inventes
-  una cifra.
-- Lo que sí podés hacer sin pedirle nada al usuario: delegar un subtask
-  mecánico a un subagente con un modelo más económico, si la plataforma lo
-  permite.
+- No podés cambiar el modelo de la sesión: eso es `/model` del usuario.
+  No propongas cambiarlo sin una razón clara.
+- No sabés cuántos tokens se gastaron: el usuario lo ve con `/usage`. No
+  inventes una cifra.
+- Sí podés delegar a un subagente más barato (Agent tool).
 
-## Cuándo activarse (proactivo, pero no molesto)
+## Quién hace qué
 
-Revisá esto en dos momentos, no en cada mensaje:
-1. **Al empezar una tarea nueva y claramente delimitada** dentro de la
-   conversación (el usuario pide algo distinto a lo anterior).
-2. **De tanto en tanto**, cuando notés que la conversación ya lleva varios
-   turnos con archivos grandes leídos, mucho ida y vuelta, o el usuario
-   menciona que "esto se está poniendo largo/caro".
+| Agente | Modelo | Esfuerzo | Para |
+|---|---|---|---|
+| `explorador` | `haiku` | low | buscar, listar, leer y resumir, "qué cambió desde X" |
+| `implementador` | `sonnet` | medium | UNA tarea ya especificada, tests primero |
+| `revisor` | `sonnet` | high | diff vs spec, corre tests, veredicto; bucle con implementador máx. 2 vueltas |
+| Modelo principal (inline) | — | — | arquitectura, trade-offs, debugging con varias hipótesis, seguridad, y decidir qué delegar |
 
-No interrumpas por un ahorro marginal. Solo decí algo cuando el ahorro es
-real: una tarea mecánica que no necesita razonamiento del modelo principal,
-o una conversación que ya es objetivamente pesada.
+El modelo y el esfuerzo de cada agente ya están en su frontmatter. Pasá
+`effort` en el Agent tool solo para salir de esa tabla:
+- **Escalar por fallo, no por anticipación**: si el revisor pide cambios,
+  la segunda vuelta del implementador va en `high`; algo que ya falló en
+  `high` va en `xhigh`.
+- **`max` nunca.**
+- El que edita no sube "por las dudas": con esfuerzo alto tiende a hacer
+  cambios que nadie pidió. El que solo lee/juzga sí puede pensar más.
 
-## 1. Reparto de modelos — el modelo principal orquesta
+Los subagentes no ven la conversación: el briefing lleva el pedido con las
+palabras del usuario, las rutas de archivos y el resultado del paso anterior.
 
-Usá el modelo principal para arquitectura, trade-offs ambiguos, debugging con
-varias hipótesis, seguridad y la decisión de qué delegar. No recomiendes
-cambiar de modelo sin una razón clara.
+## Cuándo delegar — hay un piso
 
-Los perfiles incluidos en `agents/` cumplen estos roles:
-- **`explorador`** — tareas mecánicas de búsqueda, lectura y resumen.
-- **`implementador`** — UNA tarea ya especificada, tests primero, y para.
-- **`revisor`** — verificador de solo lectura: diff contra spec/tarea, corre
-  tests, empieza con `VEREDICTO: APROBADO` o `VEREDICTO: CAMBIOS NECESARIOS`.
-  Bucle revisor↔implementador: máximo 2 vueltas, después parar y explicar.
+Cada subagente arranca pagando su system prompt + tools + briefing. Delegá
+solo si se cumplen las tres:
+1. Es **pesado de leer** (muchos archivos o mucho output).
+2. El resultado **comprime mucho** (muchos archivos → pocas líneas).
+3. Es **autocontenido** (se briefea en un párrafo).
 
-Los subagentes NO ven la conversación: el briefing lleva la petición con las
-palabras del usuario, rutas de archivos y el resultado del paso anterior.
-Para algo que no encaja en los perfiles, usá un agente con modelo explícito si
-la plataforma ofrece esa opción.
+Si toca 1-3 archivos conocidos o depende del contexto acumulado, inline.
+`fork` hereda tu contexto pero corre en tu mismo modelo: sirve para
+paralelizar, no para ahorrar.
 
-## 2. Cuándo delegar — hay un piso, no delegues por reflejo
+Pesado *y* dependiente del contexto: decidí vos inline y delegá la
+ejecución ya resuelta; si el contexto es largo, escribilo en un archivo
+del proyecto y pasá el puntero, no la transcripción.
 
-Cada subagente arranca con un costo fijo (instrucciones, herramientas y
-briefing): delegar una tarea chica puede salir más caro que hacerla inline.
+Avisá en una línea cuando delegaste y por qué.
 
-Delegá cuando se cumplen las tres:
-1. El trabajo es **pesado de leer** (muchos archivos, mucho output de tools).
-2. El resultado **comprime mucho** (lee muchos archivos → devuelve pocas
-   líneas).
-3. Es **autocontenido**: se briefea en un párrafo, sin arrastrar decisiones
-   de la conversación.
+## Conversación pesada
 
-Hacelo inline si la tarea toca pocos archivos conocidos o depende del contexto
-acumulado. Recrear ese contexto cuesta más de lo que ahorra — y si el
-subagente vuelve mal, pagás el rehacer además del intento fallido.
+En una sesión larga, el contexto acumulado se relee en cada turno. La
+palanca es que la sesión no crezca:
+- **Una tarea = una sesión**: al cambiar de tema, sugerí `/clear`.
+- **Compactar antes de alejarse**, no al volver.
+- **Navegador como texto**: leer el texto de la página o consultar solo el
+  dato; captura de pantalla solo para verificar algo visual.
 
-Un agente que hereda todo el contexto no es automáticamente más barato: sirve
-para paralelizar, no para ahorrar.
-
-Techo de concurrencia: 3-4 agentes cuando cada uno lee todo el repo (el
-detalle está en `proyecto-de-codigo-con-ia`).
-Avisá cuando delegaste y por qué, en una línea.
-
-## 2b. Trabajo pesado que SÍ depende del contexto
-
-Tres salidas, en orden:
-
-1. **Separá la decisión de la ejecución.** Decidí inline y delegá la ejecución
-   ya resuelta, con instrucciones explícitas.
-2. **Escribí el contexto en un archivo** en vez de arrastrarlo en el briefing.
-   Un subagente fresco puede leer el documento y pagar esa lectura en su propio
-   contexto. Si la tarea se va a delegar más de una vez, el doc puede ahorrar
-   duplicación.
-3. **Briefing como puntero, no como transcripción.** Indicar un archivo y una
-   sección cuesta menos que pegar el contenido una y otra vez.
-
-Si después de eso la tarea sigue pesada e inseparable del hilo, hacela inline
-y aceptá el costo, o pará y ofrecé compactar la conversación. Paralelizá solo
-cuando el valor buscado es tiempo de reloj y el costo se acepta a sabiendas.
-
-## 3. Conversación pesada → compactar o reiniciar
-
-El contexto acumulado y releído puede dominar el costo de una sesión larga.
-La palanca principal suele ser evitar que una sesión crezca sin necesidad:
-- **Una tarea = una sesión.** Al cerrar una tarea y arrancar otra que no
-  depende de los detalles, sugerí una sesión nueva en una línea.
-- **Compactar antes de alejarse**, no al volver, para resumir antes de una
-  pausa larga.
-- **Navegador:** preferí lectura de texto y consultas que devuelvan solo los
-  datos; capturas solo para verificación visual necesaria.
-- Si hay un comando de uso/costo, recomendalo si preguntan en qué se gasta.
-
-Señales de que conviene cortar (heurísticas, usalas en conjunto):
-- Se leyeron varios archivos grandes o se generó mucho output de herramientas.
-- Hay muchos turnos sobre temas resueltos que ya no hacen falta en contexto.
-- El usuario dice explícitamente que se siente lento o pesado.
-- Se está por arrancar una tarea nueva y grande que no depende de los detalles
-  finos de lo ya hablado.
-
-Cuando pase, ofrecé **las dos rutas**, no elijas por el usuario:
-1. **Compactar** — seguir en la misma sesión con contexto resumido.
-2. **Reiniciar con un paquete de traspaso** — preparar un bloque copiable con
-   qué se estaba haciendo, decisiones tomadas, archivos relevantes y próximo
-   paso concreto. Si el proyecto ya tiene un archivo de handoff, ofrecer
-   actualizarlo en vez de dar un bloque suelto.
-
-## Tono
-
-Una línea, directo, sin alarmismo ni disculpas. El valor de esta skill es
-ahorrar esfuerzo sin darle una charla sobre eficiencia cada vez.
+Cuando la sesión ya pesa (muchos archivos grandes, muchos turnos de temas
+cerrados, el usuario la nota lenta, o arranca una tarea grande nueva),
+ofrecé las dos rutas y que elija el usuario:
+1. `/compact`.
+2. Sesión nueva con este bloque (o escrito en el archivo de traspaso del
+   proyecto, si tiene uno):
+   ```
+   ## Contexto para retomar
+   Tarea: <una línea>
+   Decisiones ya tomadas: <bullets>
+   Archivos relevantes: <rutas>
+   Próximo paso: <una línea concreta>
+   ```

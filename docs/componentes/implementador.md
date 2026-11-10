@@ -6,4 +6,5 @@
 - **Entradas:** instrucción, spec/plan y archivos indicados.
 - **Salida:** cambios y resultado real de tests; se detiene al completar esa tarea.
 - **Ejemplo:** asignarle la implementación de un ítem definido de un plan.
+- **Modelo y esfuerzo:** `sonnet`, esfuerzo `medium`, según su frontmatter.
 - **Límites:** si el plan es imposible o incorrecto, se detiene; no hace commits salvo que se le pida.

@@ -1,6 +1,7 @@
 ---
 name: office-hours
 description: Usar ANTES de escribir código cuando el usuario trae una idea nueva (app, negocio, feature grande, proyecto propio) y hay que decidir si vale la pena construirla y cuál es la versión más chica que sirve. Dispara con frases como "se me ocurrió...", "quiero hacer una app para...", "¿vale la pena hacer X?", "ayudame a pensar esta idea", "/office-hours". Produce un doc de diseño, nunca código.
+disable-model-invocation: true
 ---
 
 # Office hours — entender el problema antes de proponer soluciones

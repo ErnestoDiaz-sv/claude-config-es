@@ -12,6 +12,11 @@ Este archivo sigue el formato Keep a Changelog.
 ### Cambiado
 
 - Los agentes usan aliases de modelo (`haiku` y `sonnet`) en lugar de IDs fijados.
+- `implementador` y `revisor` declaran su esfuerzo (`medium` y `high`).
+- `statusline.sh` usa el tamaño real de la ventana de contexto y colorea por porcentaje.
+- `supervisor-de-costos` reescrita: más corta, con tabla de agentes y reglas de esfuerzo.
+- `limpieza-config` recupera los comandos concretos para medir uso, detectar hooks huérfanos y mover a la papelera.
+- `office-hours` y `limpieza-config` solo se activan cuando el usuario las invoca.
 
 ## [0.1.0] - 2026-10-22
 
